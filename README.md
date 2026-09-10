@@ -272,6 +272,11 @@ Install dependencies for both the Next.js web application and the Sanity Studio:
 ```bash
 # Install root (Next.js) dependencies
 npm install
+
+#Deploy this First. 
+cd studio
+npx sanity login
+npx sanity deploy
 ```
 
 **Set Up Environment Variables**

@@ -1,3 +1,4 @@
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { openai } from "@ai-sdk/openai";
 import type { MCPClient } from "@ai-sdk/mcp";
 import { auth } from "@clerk/nextjs/server";
@@ -35,7 +36,8 @@ export const maxDuration = 60;
  */
 const MAX_STEPS = 6;
 
-const DEFAULT_MODEL = "gpt-5";
+const DEFAULT_OPENAI_MODEL = "gpt-5";
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 function errorResponse(status: number, error: string) {
   return Response.json({ error }, { status });
@@ -74,17 +76,38 @@ export async function POST(request: NextRequest) {
       Object.entries(mcpTools).filter(([name]) => name !== "initial_context"),
     );
 
+    const geminiApiKey =
+      process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+
+    let model;
+    if (geminiApiKey) {
+      const google = createGoogleGenerativeAI({ apiKey: geminiApiKey });
+      const modelId =
+        process.env.GEMINI_SEARCH_MODEL ||
+        process.env.GOOGLE_SEARCH_MODEL ||
+        DEFAULT_GEMINI_MODEL;
+      model = google(modelId);
+    } else if (process.env.OPENAI_API_KEY) {
+      model = openai(process.env.OPENAI_SEARCH_MODEL || DEFAULT_OPENAI_MODEL);
+    } else {
+      throw new Error("Missing environment variable: GEMINI_API_KEY (or OPENAI_API_KEY)");
+    }
+
     const { output } = await generateText({
-      model: openai(process.env.OPENAI_SEARCH_MODEL || DEFAULT_MODEL),
+      model,
       system: buildSystemPrompt(initialContext),
       prompt: buildUserPrompt(query),
       tools,
       stopWhen: stepCountIs(MAX_STEPS),
       output: Output.object({ schema: ModelAnswerSchema }),
       abortSignal: request.signal,
-      // Search is latency-sensitive and the reasoning here is shallow: write one GROQ query, rank
-      // what comes back. Heavy reasoning pushed a single search past a minute.
-      providerOptions: { openai: { reasoningEffort: "low", textVerbosity: "low" } },
+      ...(geminiApiKey
+        ? {}
+        : {
+            providerOptions: {
+              openai: { reasoningEffort: "low", textVerbosity: "low" },
+            },
+          }),
     });
 
     const results = await groundHits(output.hits, sort);

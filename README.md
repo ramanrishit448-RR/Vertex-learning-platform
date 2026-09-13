@@ -262,7 +262,7 @@ Ensure you have the following installed:
 
 ### 2. Clone the Repository
 ```bash
-git clone https://github.com/your-username/vertex-learning-platform.git
+git clone https://github.com/ramanrishit448-RR/vertex-learning-platform.git
 cd vertex-learning-platform
 ```
 

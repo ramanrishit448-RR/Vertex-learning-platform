@@ -1,7 +1,7 @@
 <div align="center">
   <br />
   <a href="https://youtu.be/8DfvwZ812dM" target="_blank">
-    <img src="public/readme/readme-hero.webp" alt="Vertex Platform Banner" width="100%" />
+    <img src="public/readme/readme-hero.png" alt="Vertex Platform Banner" width="100%" />
   </a>
   <br />
   <br />
